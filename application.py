@@ -1,4 +1,6 @@
-from boto.connection import AWSAuthConnection
+import boto3
+from elasticsearch import Elasticsearch, RequestsHttpConnection
+from requests_aws4auth import AWS4Auth
 from flask import Flask, request
 from tensorflow import keras
 import numpy as np
@@ -7,23 +9,23 @@ from PIL import Image
 from io import BytesIO
 application = Flask(__name__)
 
-class ESConnection(AWSAuthConnection):
-    def __init__(self, region, **kwargs):
-        super(ESConnection, self).__init__(**kwargs)
-        self._set_auth_region_name(region)
-        self._set_auth_service_name("es")
-    def _required_auth_capability(self):
-        return ['hmac-v4']
 
 @application.before_first_request
 def make_connect():
-    global client
-        # Note, BOTO receives credentials from the EC2 instance's IAM Role
-    client = ESConnection(
-      region='us-east-1',
-      # Be sure to enter the URL of YOUR Elasticsearch Service!!!
-      host='search-dog-finder-v2-7wjebliu7bqocjgom3d6csaxde.us-east-1.es.amazonaws.com',
-      is_secure=False)
+    global es
+    host = 'search-dog-finder-v2-7wjebliu7bqocjgom3d6csaxde.us-east-1.es.amazonaws.com'
+    service = 'es'
+    region = 'us-east-1'
+    credentials = boto3.Session().get_credentials()
+    awsauth = AWS4Auth(credentials.access_key, credentials.secret_key, region, service, session_token=credentials.token)
+
+    es = Elasticsearch(
+        hosts = [{'host': host, 'port': 443}],
+        http_auth = awsauth,
+        use_ssl = True,
+        verify_certs = True,
+        connection_class = RequestsHttpConnection
+    )
 
 @application.route('/')
 def hello_world():
@@ -48,6 +50,12 @@ def random():
   array = np.random.random((1,64,64,3))
   prediction = model(array)
   return {'prediction': prediction.numpy().tolist()}
+
+@application.route('/es', methods=['GET'])
+def es_route():
+  global es
+  index ='vectors'
+  return {'index': es.indices.exists(index)}
 
 if __name__ == '__main__':
   application.run()
