@@ -44,6 +44,45 @@ def predict():
   prediction = model(array)
   return {'prediction': prediction.numpy().tolist()}
 
+@application.route('/predict-save', methods=['POST'])
+def predict_save():
+  url = request.json['url']
+  response = requests.get(url)
+  model = keras.models.load_model('vgg16')
+  img = Image.open(BytesIO(response.content))
+  resized = img.resize((299,299))
+  array = np.array(resized)[None]
+  prediction = model(array).numpy().tolist()[0]
+  document = {
+        "image_vector": prediction,
+        "image_url": url
+  }
+  result = es.index(index='vectors', body=document)
+  return {'result': result}
+
+@application.route('/search', methods=['POST'])
+def search():
+  url = request.json['url']
+  response = requests.get(url)
+  model = keras.models.load_model('vgg16')
+  img = Image.open(BytesIO(response.content))
+  resized = img.resize((299,299))
+  array = np.array(resized)[None]
+  prediction = model(array).numpy().tolist()[0]
+  results = es.search(index='vectors', body={
+    "size": 5,
+    "query": {
+        "knn": {
+            "image_vector": {
+                "vector": prediction,
+                "k": 5
+            }
+        }
+    },
+    "_source": ["image_url"],
+  })
+  return {'result': results}
+
 @application.route('/random', methods=['GET'])
 def random():
   model = keras.models.load_model('vgg16')
