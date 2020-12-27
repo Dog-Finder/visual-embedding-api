@@ -3,6 +3,7 @@ from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from flask import Flask, request
 from tensorflow import keras
+from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
 import numpy as np
 import requests
 from PIL import Image
@@ -10,7 +11,7 @@ from io import BytesIO
 application = Flask(__name__)
 
 
-@application.before_first_request
+
 def make_connect():
     global es
     host = 'search-dog-finder-v2-7wjebliu7bqocjgom3d6csaxde.us-east-1.es.amazonaws.com'
@@ -27,6 +28,17 @@ def make_connect():
         connection_class = RequestsHttpConnection
     )
 
+def load_model():
+  global model
+  model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
+
+
+@application.before_first_request
+def set_up():
+  global model
+  make_connect()
+  load_model()
+
 @application.route('/')
 def hello_world():
   return "Hello World"
@@ -34,24 +46,25 @@ def hello_world():
 
 @application.route('/predict', methods=['POST'])
 def predict():
+  global model
   url = request.json['url']
-  response = requests.get(url)
-  model = keras.models.load_model('vgg16')
   response = requests.get(url)
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
+  array = preprocess_input(array)
   prediction = model(array)
   return {'prediction': prediction.numpy().tolist()}
 
 @application.route('/predict-save', methods=['POST'])
 def predict_save():
+  global model
   url = request.json['url']
   response = requests.get(url)
-  model = keras.models.load_model('vgg16')
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
+  array = preprocess_input(array)
   prediction = model(array).numpy().tolist()[0]
   document = {
         "image_vector": prediction,
@@ -62,12 +75,13 @@ def predict_save():
 
 @application.route('/search', methods=['POST'])
 def search():
+  global model
   url = request.json['url']
   response = requests.get(url)
-  model = keras.models.load_model('vgg16')
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
+  array = preprocess_input(array)
   prediction = model(array).numpy().tolist()[0]
   results = es.search(index='vectors', body={
     "size": 5,
@@ -85,8 +99,8 @@ def search():
 
 @application.route('/random', methods=['GET'])
 def random():
-  model = keras.models.load_model('vgg16')
-  array = np.random.random((1,64,64,3))
+  global model
+  array = np.random.random((1,299,299,3))
   prediction = model(array)
   return {'prediction': prediction.numpy().tolist()}
 
