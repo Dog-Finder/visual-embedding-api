@@ -2,10 +2,9 @@ import boto3
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
 from flask import Flask, request
-from tensorflow import keras
 from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
 import numpy as np
-import requests
+import requests as rqs
 from PIL import Image
 from io import BytesIO
 application = Flask(__name__)
@@ -48,7 +47,7 @@ def hello_world():
 def predict():
   global model
   url = request.json['url']
-  response = requests.get(url)
+  response = rqs.get(url)
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
@@ -59,16 +58,21 @@ def predict():
 @application.route('/predict-save', methods=['POST'])
 def predict_save():
   global model
-  url = request.json['url']
-  response = requests.get(url)
+  data = request.json
+  imageLink = data['imageLink']
+  userId = data['userId']
+  entryId = data['entryId']
+  response = rqs.get(imageLink)
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
   array = preprocess_input(array)
   prediction = model(array).numpy().tolist()[0]
   document = {
-        "image_vector": prediction,
-        "image_url": url
+        "image-vector": prediction,
+        "image-url": imageLink,
+        "user-id": userId,
+        "entry-id": entryId,
   }
   result = es.index(index='vectors', body=document)
   return {'result': result}
@@ -77,13 +81,13 @@ def predict_save():
 def search():
   global model
   url = request.json['url']
-  response = requests.get(url)
+  response = rqs.get(url)
   img = Image.open(BytesIO(response.content))
   resized = img.resize((299,299))
   array = np.array(resized)[None]
   array = preprocess_input(array)
   prediction = model(array).numpy().tolist()[0]
-  results = es.search(index='vectors', body={
+  results = es.search(index='notices', body={
     "size": 5,
     "query": {
         "knn": {
@@ -93,7 +97,7 @@ def search():
             }
         }
     },
-    "_source": ["image_url"],
+    "_source": ["image-url","notice-id"],
   })
   return {'result': results}
 
