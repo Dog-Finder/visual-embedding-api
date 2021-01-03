@@ -88,17 +88,17 @@ def search():
   array = np.array(resized)[None]
   array = preprocess_input(array)
   prediction = model(array).numpy().tolist()[0]
-  results = es.search(index='notices', body={
+  results = es.search(index='vectors', body={
     "size": 5,
     "query": {
         "knn": {
-            "image_vector": {
+            "image-vector": {
                 "vector": prediction,
                 "k": 5
             }
         }
     },
-    "_source": ["image-url","notice-id"],
+    "_source": ["image-url","user-id","entry-id"],
   })
   return {'result': results}
 
