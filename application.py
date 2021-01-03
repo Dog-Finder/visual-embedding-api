@@ -12,7 +12,6 @@ application = Flask(__name__)
 
 
 def make_connect():
-    global es
     host = 'search-dog-finder-v2-7wjebliu7bqocjgom3d6csaxde.us-east-1.es.amazonaws.com'
     service = 'es'
     region = 'us-east-1'
@@ -26,6 +25,7 @@ def make_connect():
         verify_certs = True,
         connection_class = RequestsHttpConnection
     )
+    return es
 
 def load_model():
   global model
@@ -35,7 +35,6 @@ def load_model():
 @application.before_first_request
 def set_up():
   global model
-  make_connect()
   load_model()
 
 @application.route('/')
@@ -58,6 +57,7 @@ def predict():
 @application.route('/predict-save', methods=['POST'])
 def predict_save():
   global model
+  es = make_connect()
   data = request.json
   imageLink = data['imageLink']
   userId = data['userId']
@@ -80,6 +80,7 @@ def predict_save():
 @application.route('/search', methods=['POST'])
 def search():
   global model
+  es = make_connect()
   url = request.json['url']
   response = rqs.get(url)
   img = Image.open(BytesIO(response.content))
@@ -110,7 +111,7 @@ def random():
 
 @application.route('/es', methods=['GET'])
 def es_route():
-  global es
+  es = make_connect()
   index ='vectors'
   return {'index': es.indices.exists(index)}
 
