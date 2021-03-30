@@ -1,0 +1,86 @@
+service: visual-embedding-api
+
+frameworkVersion: '2'
+
+
+provider:
+  name: aws
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  timeout: 100
+  ecr:
+    # In this section you can define images that will be built locally and uploaded to ECR
+    images:
+      appimage:
+        path: ./
+
+
+functions:
+  hello:
+    image:
+      name: appimage
+    events:
+      - http:
+          path: /
+          method: get
+
+  predict:
+    image:
+      name: appimage
+      command:
+        - app.predict
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - http:
+          path: /predict
+          method: post
+
+  predict_save:
+    image:
+      name: appimage
+      command:
+        - app.predict_save
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - http:
+          path: /predict-save
+          method: post
+
+  search:
+    image:
+      name: appimage
+      command:
+        - app.search
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - http:
+          path: /search
+          method: post
+  random:
+    image:
+      name: appimage
+      command:
+        - app.random
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - http:
+          path: /random
+          method: post
+  es:
+    image:
+      name: appimage
+      command:
+        - app.es
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    events:
+      - http:
+          path: /es
+          method: post
+
+plugins:
+  - serverless-offline
