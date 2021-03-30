@@ -9,4 +9,4 @@ RUN python3.8 -m pip install -r requirements.txt
 COPY app.py ./
 
 # You can overwrite command in `serverless.yml` template
-CMD ["app.handler"]
+CMD ["app.hello"]
