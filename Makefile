@@ -3,8 +3,10 @@ build:
 	docker build -t visual-embedding-api-dev .
 	docker tag visual-embedding-api-dev:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
 
-push:
-	docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search | export DIGGEST="$(ggrep -oP '(?<=digest: )[^ ]+')" 
+deploy:
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	sls deploy
 
 local:
 	docker run -p 9000:8080 visual-embedding-api-dev:latest $(handler)

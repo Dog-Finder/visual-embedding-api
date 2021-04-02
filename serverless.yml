@@ -12,7 +12,7 @@ provider:
   ecr:
     images: # Definitions of images that later can be referenced by key in `function.image`
       baseimage:
-        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search@${env:DIGGEST}
+        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search:latest
   iam:
     role:
       statements:
