@@ -1,4 +1,5 @@
 build:
+	poetry export -f requirements.txt --output requirements.txt --without-hashes
 	docker build -t visual-embedding-api-dev .
 	docker tag visual-embedding-api-dev:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
 

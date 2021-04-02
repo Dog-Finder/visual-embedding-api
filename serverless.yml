@@ -8,14 +8,24 @@ provider:
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
   timeout: 100
+  memorySize: 3008
   ecr:
     images: # Definitions of images that later can be referenced by key in `function.image`
       baseimage:
         uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search@${env:DIGGEST}
-
+  iam:
+    role:
+      statements:
+          - Effect: 'Allow'
+            Action:
+              - 'lambda:InvokeFunction'
+            Resource: "*"
 
 functions:
   hello:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
     events:
@@ -24,6 +34,9 @@ functions:
           method: get
 
   predict:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
       command:
@@ -36,6 +49,9 @@ functions:
           method: post
 
   predict_save:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
       command:
@@ -48,6 +64,9 @@ functions:
           method: post
 
   search:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
       command:
@@ -59,6 +78,9 @@ functions:
           path: /search
           method: post
   random:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
       command:
@@ -70,10 +92,13 @@ functions:
           path: /random
           method: post
   es:
+    warmup:
+      default:
+        enabled: false
     image:
       name: baseimage
       command:
-        - app.es
+        - app.es_route
       entryPoint:
         - '/lambda-entrypoint.sh'
     events:
@@ -82,4 +107,11 @@ functions:
           method: post
 
 plugins:
-  - serverless-offline
+  - serverless-plugin-warmup
+
+custom:
+  warmup:
+    default:
+      enabled: true
+      prewarm: true
+      timeout: 100

@@ -2,11 +2,21 @@ import json
 import boto3
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
-from tensorflow.keras.applications.inception_resnet_v2 import InceptionResNetV2, preprocess_input
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
 import numpy as np
 import requests
 from PIL import Image
 from io import BytesIO
+
+import tensorflow as tf
+import tensorflow_hub as hub
+
+IMAGE_WIDTH = 299
+IMAGE_HEIGHT = 299
+
+IMAGE_SHAPE = (IMAGE_WIDTH, IMAGE_HEIGHT)
+model = tf.keras.Sequential([hub.KerasLayer("model/", trainable=False)])
+model.build([None, IMAGE_WIDTH, IMAGE_HEIGHT, 3])
 
 # model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
 
@@ -30,7 +40,11 @@ def make_connect():
     return es
 
 
+@skip_execution_if.warmup_call
 def hello(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     body = {'message': 'Hello World'}
     response = {
         "statusCode": 200,
@@ -40,6 +54,9 @@ def hello(event, context):
 
 
 def predict(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     body = json.loads(event['body'])
     url = body['url']
     response = requests.get(url)
@@ -57,6 +74,9 @@ def predict(event, context):
 
 
 def predict_save(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     es = make_connect()
     body = json.loads(event['body'])
     imageLink = body['imageLink']
@@ -84,6 +104,9 @@ def predict_save(event, context):
 
 
 def search(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     es = make_connect()
     body = json.loads(event['body'])
     url = body['url']
@@ -114,6 +137,9 @@ def search(event, context):
 
 
 def random(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     array = np.random.random((1, 299, 299, 3))
     prediction = model(array)
     body = {'prediction': prediction.numpy().tolist()}
@@ -125,6 +151,9 @@ def random(event, context):
 
 
 def es_route(event, context):
+    if event.get("source") == "serverless-plugin-warmup":
+        print("WarmUp - Lambda is warm!")
+        return {}
     es = make_connect()
     index = 'vectors'
     body = {'index': es.indices.exists(index)}
