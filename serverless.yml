@@ -9,16 +9,15 @@ provider:
   stage: ${opt:stage, 'dev'}
   timeout: 100
   ecr:
-    # In this section you can define images that will be built locally and uploaded to ECR
-    images:
-      appimage:
-        path: ./
+    images: # Definitions of images that later can be referenced by key in `function.image`
+      baseimage:
+        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search@${env:DIGGEST}
 
 
 functions:
   hello:
     image:
-      name: appimage
+      name: baseimage
     events:
       - http:
           path: /
@@ -26,7 +25,7 @@ functions:
 
   predict:
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.predict
       entryPoint:
@@ -38,7 +37,7 @@ functions:
 
   predict_save:
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.predict_save
       entryPoint:
@@ -50,7 +49,7 @@ functions:
 
   search:
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.search
       entryPoint:
@@ -61,7 +60,7 @@ functions:
           method: post
   random:
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.random
       entryPoint:
@@ -72,7 +71,7 @@ functions:
           method: post
   es:
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.es
       entryPoint:

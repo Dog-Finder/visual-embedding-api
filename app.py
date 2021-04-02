@@ -8,7 +8,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 
-model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
+# model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
 
 
 def make_connect():
