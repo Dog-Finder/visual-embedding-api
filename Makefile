@@ -9,7 +9,12 @@ deploy:
 	sls deploy
 
 local:
-	docker run -p 9000:8080 visual-embedding-api-dev:latest $(handler)
+	docker run \
+	-p 9000:8080 \
+	-v "$$HOME/.aws":/root/.aws \
+  -e AWS_REGION=us-east-1 \
+	-e AWS_PROFILE=yoavnavon \
+	visual-embedding-api-dev:latest $(handler)
 
 ping:
 	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'

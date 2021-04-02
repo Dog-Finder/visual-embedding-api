@@ -24,11 +24,20 @@ model.build([None, IMAGE_WIDTH, IMAGE_HEIGHT, 3])
 def make_connect():
     host = 'search-dog-finder-search-fcdwwfogeqqcr2dyrhjonwqmem.us-east-1.es.amazonaws.com'
     region = 'us-east-1'  # e.g. us-west-1
-
     service = 'es'
-    credentials = boto3.Session(profile_name='elasticsearch').get_credentials()
-    awsauth = AWS4Auth(credentials.access_key, credentials.secret_key,
-                       region, service, session_token=credentials.token)
+
+    sts_connection = boto3.client('sts')
+    acct_b = sts_connection.assume_role(
+        RoleArn="arn:aws:iam::111465656160:role/query-elasticsearch",
+        RoleSessionName="cross_acct_lambda"
+    )
+
+    ACCESS_KEY = acct_b['Credentials']['AccessKeyId']
+    SECRET_KEY = acct_b['Credentials']['SecretAccessKey']
+    SESSION_TOKEN = acct_b['Credentials']['SessionToken']
+
+    awsauth = AWS4Auth(ACCESS_KEY, SECRET_KEY,
+                       region, service, session_token=SESSION_TOKEN)
 
     es = Elasticsearch(
         hosts=[{'host': host, 'port': 443}],
@@ -38,19 +47,6 @@ def make_connect():
         connection_class=RequestsHttpConnection
     )
     return es
-
-
-@skip_execution_if.warmup_call
-def hello(event, context):
-    if event.get("source") == "serverless-plugin-warmup":
-        print("WarmUp - Lambda is warm!")
-        return {}
-    body = {'message': 'Hello World'}
-    response = {
-        "statusCode": 200,
-        "body": json.dumps(body)
-    }
-    return response
 
 
 def predict(event, context):

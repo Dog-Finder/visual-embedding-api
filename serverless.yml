@@ -10,16 +10,20 @@ provider:
   timeout: 100
   memorySize: 3008
   ecr:
-    images: # Definitions of images that later can be referenced by key in `function.image`
+    images: 
       baseimage:
         uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search:latest
   iam:
     role:
       statements:
-          - Effect: 'Allow'
-            Action:
-              - 'lambda:InvokeFunction'
-            Resource: "*"
+        - Effect: 'Allow'
+          Action:
+            - 'lambda:InvokeFunction'
+          Resource: "*"
+        - Effect: 'Allow'
+          Action:
+            - "sts:AssumeRole"
+          Resource: "arn:aws:iam::111465656160:role/query-elasticsearch"
 
 functions:
   hello:
