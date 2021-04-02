@@ -8,25 +8,41 @@ provider:
   lambdaHashingVersion: 20201221
   stage: ${opt:stage, 'dev'}
   timeout: 100
+  memorySize: 3008
   ecr:
-    # In this section you can define images that will be built locally and uploaded to ECR
-    images:
-      appimage:
-        path: ./
-
+    images: 
+      baseimage:
+        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search:latest
+  iam:
+    role:
+      statements:
+        - Effect: 'Allow'
+          Action:
+            - 'lambda:InvokeFunction'
+          Resource: "*"
+        - Effect: 'Allow'
+          Action:
+            - "sts:AssumeRole"
+          Resource: "arn:aws:iam::111465656160:role/query-elasticsearch"
 
 functions:
   hello:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
     events:
       - http:
           path: /
           method: get
 
   predict:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.predict
       entryPoint:
@@ -37,8 +53,11 @@ functions:
           method: post
 
   predict_save:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.predict_save
       entryPoint:
@@ -49,8 +68,11 @@ functions:
           method: post
 
   search:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.search
       entryPoint:
@@ -60,8 +82,11 @@ functions:
           path: /search
           method: post
   random:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
       command:
         - app.random
       entryPoint:
@@ -71,10 +96,13 @@ functions:
           path: /random
           method: post
   es:
+    warmup:
+      default:
+        enabled: true
     image:
-      name: appimage
+      name: baseimage
       command:
-        - app.es
+        - app.es_route
       entryPoint:
         - '/lambda-entrypoint.sh'
     events:
@@ -83,4 +111,11 @@ functions:
           method: post
 
 plugins:
-  - serverless-offline
+  - serverless-plugin-warmup
+
+custom:
+  warmup:
+    default:
+      enabled: true
+      prewarm: true
+      timeout: 100
