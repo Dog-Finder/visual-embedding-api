@@ -9,6 +9,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   timeout: 100
   memorySize: 3008
+  environment:
+    LAMBDA_ENV: ${opt:stage, 'dev'}
   ecr:
     images: 
       baseimage:
@@ -29,7 +31,7 @@ functions:
   hello:
     warmup:
       default:
-        enabled: true
+        enabled: false
     image:
       name: baseimage
     events:

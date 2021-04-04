@@ -7,6 +7,7 @@ import numpy as np
 import requests
 from PIL import Image
 from io import BytesIO
+import os
 
 import tensorflow as tf
 import tensorflow_hub as hub
@@ -49,6 +50,11 @@ def make_connect():
     return es
 
 
+def hello(event, context):
+    print(os.environ)
+    return {'message': 'Hello World'}
+
+
 def predict(event, context):
     if event.get("source") == "serverless-plugin-warmup":
         print("WarmUp - Lambda is warm!")
@@ -78,7 +84,9 @@ def predict_save(event, context):
     imageLink = body['imageLink']
     userId = body['userId']
     entryId = body['entryId']
-    index = 'found' if entryId.startswith('found') else 'lost'
+    index_type = 'found' if entryId.startswith('found') else 'lost'
+    index_env = os.getenv('LAMBDA_ENV', 'local')
+    index = f'{index_env}-{index_type}'
     response = requests.get(imageLink)
     img = Image.open(BytesIO(response.content))
     resized = img.resize((299, 299))
@@ -107,7 +115,9 @@ def search(event, context):
     es = make_connect()
     body = json.loads(event['body'])
     url = body['url']
-    index = body['index']
+    index_type = body['index']
+    index_env = os.getenv('LAMBDA_ENV', 'local')
+    index = f'{index_env}-{index_type}'
     size = body['size']
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))

@@ -1,12 +1,16 @@
 build:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
-	docker build -t visual-embedding-api-dev .
-	docker tag visual-embedding-api-dev:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	docker build -t visual-embedding-api-${stage} .
+	docker tag visual-embedding-api-${stage}:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+
+deploy-build:
+	docker build -t visual-embedding-api-${stage} .
+	docker tag visual-embedding-api-${stage}:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
 
 deploy:
-	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
-	docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
-	sls deploy
+	# aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	# docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	sls deploy --stage $(stage)
 
 local:
 	docker run \
