@@ -44,7 +44,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build Image
-      run: make build-deploy stage=${{ env.BRANCH }}
+      run: make deploy-build stage=${{ env.BRANCH }}
 
     - name: Push to ECR
       run: docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${{ env.BRANCH }}
