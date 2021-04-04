@@ -78,6 +78,7 @@ def predict_save(event, context):
     imageLink = body['imageLink']
     userId = body['userId']
     entryId = body['entryId']
+    index = 'found' if entryId.startswith('found') else 'lost'
     response = requests.get(imageLink)
     img = Image.open(BytesIO(response.content))
     resized = img.resize((299, 299))
@@ -90,7 +91,7 @@ def predict_save(event, context):
         "user-id": userId,
         "entry-id": entryId,
     }
-    result = es.index(index='vectors', body=document)
+    result = es.index(index=index, body=document)
     body = {'result': result}
     response = {
         "statusCode": 200,
@@ -106,19 +107,21 @@ def search(event, context):
     es = make_connect()
     body = json.loads(event['body'])
     url = body['url']
+    index = body['index']
+    size = body['size']
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
     resized = img.resize((299, 299))
     array = np.array(resized)[None]
     array = preprocess_input(array)
     prediction = model(array).numpy().tolist()[0]
-    results = es.search(index='vectors', body={
-        "size": 5,
+    results = es.search(index=index, body={
+        "size": size,
         "query": {
             "knn": {
                 "image-vector": {
                     "vector": prediction,
-                    "k": 5
+                    "k": size
                 }
             }
         },

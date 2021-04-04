@@ -112,6 +112,7 @@ functions:
 
 plugins:
   - serverless-plugin-warmup
+  - serverless-offline
 
 custom:
   warmup:
