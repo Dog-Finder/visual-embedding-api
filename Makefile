@@ -8,8 +8,8 @@ deploy-build:
 	docker tag visual-embedding-api-${stage}:latest 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${stage}
 
 deploy:
-	# aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
-	# docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-$(stage)
+	docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-$(stage)
 	sls deploy --stage $(stage)
 
 local:

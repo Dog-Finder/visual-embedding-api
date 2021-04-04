@@ -14,7 +14,7 @@ provider:
   ecr:
     images: 
       baseimage:
-        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search:latest
+        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${opt:stage, 'dev'}:latest
   iam:
     role:
       statements:
