@@ -10,11 +10,11 @@ provider:
   timeout: 100
   memorySize: 3008
   environment:
-    LAMBDA_ENV: ${opt:stage, 'dev'}
+    LAMBDA_ENV: ${self:provider.stage}
   ecr:
     images: 
       baseimage:
-        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${opt:stage, 'dev'}:latest
+        uri: 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${self:provider.stage}:latest
   iam:
     role:
       statements:
