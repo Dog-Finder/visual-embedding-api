@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "visual-embedding-api"
+version = "0.1.0"
+description = ""
+authors = ["Yoav Navon <yanavon@uc.cl>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+boto3 = "^1.17.43"
+elasticsearch = "^7.12.0"
+requests-aws4auth = "^1.0.1"
+Pillow = "^8.2.0"
+tensorflow-cpu = "^2.4.1"
+numpy = "1.19.5"
+tensorflow-hub = "^0.11.0"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.6"
+ipykernel = "^5.5.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
