@@ -118,6 +118,7 @@ def search(event, context):
     index_type = body['index']
     index_env = os.getenv('LAMBDA_ENV', 'local')
     index = f'{index_env}-{index_type}'
+    print('index', index)
     size = body['size']
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
