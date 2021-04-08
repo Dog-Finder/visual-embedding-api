@@ -2,7 +2,7 @@ import json
 import boto3
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from requests_aws4auth import AWS4Auth
-from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input
+from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input, InceptionResNetV2
 import numpy as np
 import requests
 from PIL import Image
@@ -16,10 +16,10 @@ IMAGE_WIDTH = 299
 IMAGE_HEIGHT = 299
 
 IMAGE_SHAPE = (IMAGE_WIDTH, IMAGE_HEIGHT)
-model = tf.keras.Sequential([hub.KerasLayer("model/", trainable=False)])
-model.build([None, IMAGE_WIDTH, IMAGE_HEIGHT, 3])
+# model = tf.keras.Sequential([hub.KerasLayer("model/", trainable=False)])
+# model.build([None, IMAGE_WIDTH, IMAGE_HEIGHT, 3])
 
-# model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
+model = InceptionResNetV2(weights='imagenet', include_top=False, pooling='avg')
 
 
 def make_connect():
@@ -63,7 +63,7 @@ def predict(event, context):
     url = body['url']
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
-    resized = img.resize((299, 299))
+    resized = img.resize(IMAGE_SHAPE)
     array = np.array(resized)[None]
     array = preprocess_input(array)
     prediction = model(array)
@@ -89,7 +89,7 @@ def predict_save(event, context):
     index = f'{index_env}-{index_type}'
     response = requests.get(imageLink)
     img = Image.open(BytesIO(response.content))
-    resized = img.resize((299, 299))
+    resized = img.resize(IMAGE_SHAPE)
     array = np.array(resized)[None]
     array = preprocess_input(array)
     prediction = model(array).numpy().tolist()[0]
@@ -121,7 +121,7 @@ def search(event, context):
     size = body['size']
     response = requests.get(url)
     img = Image.open(BytesIO(response.content))
-    resized = img.resize((299, 299))
+    resized = img.resize(IMAGE_SHAPE)
     array = np.array(resized)[None]
     array = preprocess_input(array)
     prediction = model(array).numpy().tolist()[0]
@@ -149,7 +149,7 @@ def random(event, context):
     if event.get("source") == "serverless-plugin-warmup":
         print("WarmUp - Lambda is warm!")
         return {}
-    array = np.random.random((1, 299, 299, 3))
+    array = np.random.random((1, IMAGE_HEIGHT, IMAGE_WIDTH, 3))
     prediction = model(array)
     body = {'prediction': prediction.numpy().tolist()}
     response = {
