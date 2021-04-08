@@ -8,6 +8,12 @@ on:
     paths-ignore:
     - 'dynamodb/**'
     - '**.md'
+  pull_request:
+    branches:
+      - dev
+    paths-ignore:
+    - 'dynamodb/**'
+    - '**.md'
 
 
 jobs:
