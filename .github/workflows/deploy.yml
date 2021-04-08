@@ -32,7 +32,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Get Branch name
-      run: if [ "${GITHUB_REF##*/}" == "merge" ] ; then echo dev ; else echo "BRANCH=${GITHUB_REF##*/}"; fi >> $GITHUB_ENV
+      run: if [ "${GITHUB_REF##*/}" == "merge" ] ; then echo "BRANCH=dev" ; else echo "BRANCH=${GITHUB_REF##*/}"; fi >> $GITHUB_ENV
 
     - name: Install dependecies
       run: yarn install --frozen-lockfile
