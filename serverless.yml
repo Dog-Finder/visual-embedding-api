@@ -112,6 +112,18 @@ functions:
           path: /es
           method: post
 
+  update-vectors:
+    warmup:
+      default:
+        enabled: false
+    image:
+      name: baseimage
+      command:
+        - app.update_vectors
+      entryPoint:
+        - '/lambda-entrypoint.sh'
+    timeout: 900
+
 plugins:
   - serverless-plugin-warmup
   - serverless-offline

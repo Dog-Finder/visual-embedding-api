@@ -18,7 +18,8 @@ local:
 	-v "$$HOME/.aws":/root/.aws \
   -e AWS_REGION=us-east-1 \
 	-e AWS_PROFILE=yoavnavon \
-	visual-embedding-api-dev:latest $(handler)
+	-e LAMBDA_ENV=dev \
+	visual-embedding-api-${stage}:latest $(handler)
 
 ping:
 	curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
