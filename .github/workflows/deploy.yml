@@ -1,0 +1,63 @@
+name: Serverless Deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+    paths-ignore:
+    - 'dynamodb/**'
+    - '**.md'
+  pull_request:
+    branches:
+      - dev
+    paths-ignore:
+    - 'dynamodb/**'
+    - '**.md'
+
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Get Branch name
+      run: if [ "${GITHUB_REF##*/}" == "merge" ] ; then echo "BRANCH=dev" ; else echo "BRANCH=${GITHUB_REF##*/}"; fi >> $GITHUB_ENV
+
+    - name: Install dependecies
+      run: yarn install --frozen-lockfile
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build Image
+      run: make deploy-build stage=${{ env.BRANCH }}
+
+    - name: Push to ECR
+      run: docker push 983570756921.dkr.ecr.us-east-1.amazonaws.com/dog-finder-search-${{ env.BRANCH }}
+
+    - name: Serverless Deploy
+      uses: serverless/github-action@master
+      with:
+        args: deploy --stage ${{ env.BRANCH }}
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

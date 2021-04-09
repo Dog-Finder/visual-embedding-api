@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "serverless-offline": "^6.9.0",
+    "serverless-plugin-warmup": "^5.2.2"
+  }
+}
