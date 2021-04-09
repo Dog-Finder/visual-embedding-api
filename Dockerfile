@@ -16,5 +16,11 @@ COPY src/ ./
 # RUN tar -xf model/resnet.tar.gz -C model/ && rm -r model/resnet.tar.gz
 
 
+# Download ResNet50 and store it in a directory
+RUN mkdir model
+RUN curl -L https://tfhub.dev/google/imagenet/inception_resnet_v2/feature_vector/4?tf-hub-format=compressed -o ./model/resnet.tar.gz
+RUN tar -xf model/resnet.tar.gz -C model/ && rm -r model/resnet.tar.gz
+
+
 # You can overwrite command in `serverless.yml` template
 CMD ["app.hello"]
