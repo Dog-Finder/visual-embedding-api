@@ -18,6 +18,7 @@ local:
 	-v "$$HOME/.aws":/root/.aws \
   -e AWS_REGION=us-east-1 \
 	-e AWS_PROFILE=yoavnavon \
+	-e LAMBDA_ENV=dev \
 	visual-embedding-api-${stage}:latest $(handler)
 
 ping:

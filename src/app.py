@@ -1,16 +1,17 @@
 import json
 import boto3
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+from elasticsearch.helpers import scan
 from requests_aws4auth import AWS4Auth
 from tensorflow.keras.applications.inception_resnet_v2 import preprocess_input, InceptionResNetV2
 import numpy as np
-import requests
-from PIL import Image
-from io import BytesIO
 import os
+from collections import defaultdict
 
-import tensorflow as tf
-import tensorflow_hub as hub
+# import tensorflow as tf
+# import tensorflow_hub as hub
+
+from utils import url_to_array
 
 IMAGE_WIDTH = 299
 IMAGE_HEIGHT = 299
@@ -61,11 +62,8 @@ def predict(event, context):
         return {}
     body = json.loads(event['body'])
     url = body['url']
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    resized = img.resize(IMAGE_SHAPE)
-    array = np.array(resized)[None]
-    array = preprocess_input(array)
+    array = url_to_array(url, IMAGE_SHAPE)
+    array = preprocess_input(array[None])
     prediction = model(array)
     body = {'prediction': prediction.numpy().tolist()}
     response = {
@@ -87,11 +85,8 @@ def predict_save(event, context):
     index_type = 'found' if entryId.startswith('found') else 'lost'
     index_env = os.getenv('LAMBDA_ENV', 'local')
     index = f'{index_env}-{index_type}'
-    response = requests.get(imageLink)
-    img = Image.open(BytesIO(response.content))
-    resized = img.resize(IMAGE_SHAPE)
-    array = np.array(resized)[None]
-    array = preprocess_input(array)
+    array = url_to_array(imageLink, IMAGE_SHAPE)
+    array = preprocess_input(array[None])
     prediction = model(array).numpy().tolist()[0]
     document = {
         "image-vector": prediction,
@@ -119,11 +114,8 @@ def search(event, context):
     index_env = os.getenv('LAMBDA_ENV', 'local')
     index = f'{index_env}-{index_type}'
     size = body['size']
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    resized = img.resize(IMAGE_SHAPE)
-    array = np.array(resized)[None]
-    array = preprocess_input(array)
+    array = url_to_array(url, IMAGE_SHAPE)
+    array = preprocess_input(array[None])
     prediction = model(array).numpy().tolist()[0]
     results = es.search(index=index, body={
         "size": size,
@@ -169,5 +161,35 @@ def es_route(event, context):
     response = {
         "statusCode": 200,
         "body": json.dumps(body)
+    }
+    return response
+
+
+def update_vectors(event, context):
+    index_types = ['found', 'lost']
+    index_env = os.getenv('LAMBDA_ENV', 'local')
+    es = make_connect()
+    counts = defaultdict(int)
+    for index_type in index_types:
+
+        index = f'{index_env}-{index_type}'
+        results = scan(es, query={"query": {"match_all": {}}},
+                       index=index, preserve_order=True)
+        for item in results:
+            _id = item['_id']
+            url = item['_source']['image-url']
+            array = url_to_array(url, IMAGE_SHAPE)
+            array = preprocess_input(array[None])
+            prediction = model(array).numpy().tolist()[0]
+            document = {"doc": {
+                "image-vector": prediction,
+            }}
+            result = es.update(index=index, id=_id, body=document)
+            print(result)
+            counts[index_type] += 1
+
+    response = {
+        "statusCode": 200,
+        "body": json.dumps(counts)
     }
     return response

@@ -8,7 +8,7 @@ COPY requirements.txt ./
 # Install the python requirements from requirements.txt
 RUN python3.8 -m pip install -r requirements.txt
 
-COPY app.py ./
+COPY src/ ./
 
 # Download ResNet50 and store it in a directory
 # RUN mkdir model
